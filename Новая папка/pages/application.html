@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Оформление заявки — Учусь.РФ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo"><i class="fas fa-graduation-cap"></i> Учусь.РФ</div>
+        <button class="burger" id="burgerBtn"><i class="fas fa-bars"></i></button>
+        <div class="nav-links" id="navLinks">
+            <a href="index.html"><i class="fas fa-home"></i> Главная</a>
+            <a href="register.html"><i class="fas fa-user-plus"></i> Регистрация</a>
+            <a href="login.html"><i class="fas fa-sign-in-alt"></i> Вход</a>
+            <a href="profile.html"><i class="fas fa-user"></i> Личный кабинет</a>
+            <a href="application.html" class="active"><i class="fas fa-file-signature"></i> Заявка</a>
+            <a href="admin.html"><i class="fas fa-shield-alt"></i> Админ</a>
+        </div>
+    </nav>
+
+    <div class="container" style="max-width: 540px;">
+        <div class="card fade-in" style="margin-top: 20px;">
+            <h1 class="card-title" style="text-align: center;">Оформление заявки</h1>
+            <form id="applicationForm">
+                <div class="form-group">
+                    <label>Выберите курс</label>
+                    <select class="form-control" id="appCourse" required>
+                        <option value="">— Выберите курс —</option>
+                        <option value="Курс повышения квалификации">Курс повышения квалификации</option>
+                        <option value="Курс переподготовки">Курс переподготовки</option>
+                        <option value="Курс по охране труда">Курс по охране труда</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Дата начала обучения</label>
+                    <input type="text" class="form-control" id="appDate" placeholder="ДД.ММ.ГГГГ" required>
+                    <span class="hint">Например: 15.07.2026</span>
+                    <span class="error-text" id="appDateError"></span>
+                </div>
+
+                <div class="form-group">
+                    <label>Способ оплаты</label>
+                    <select class="form-control" id="appPayment" required>
+                        <option value="">— Выберите способ —</option>
+                        <option value="Предоплата по QR-коду">Предоплата по QR-коду</option>
+                        <option value="Оплата картой МИР">Оплата картой МИР</option>
+                        <option value="Постоплата в офисе организации">Постоплата в офисе организации</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-block">Отправить заявку</button>
+            </form>
+
+            <div style="text-align: center; margin-top: 16px;">
+                <a href="profile.html" style="color: var(--primary);"><i class="fas fa-arrow-left"></i> Мои заявки</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/main.js"></script>
+    <script>
+        const user = checkAuth();
+        if (!user) {
+            window.location.href = 'login.html';
+        }
+
+        document.getElementById('applicationForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const course = document.getElementById('appCourse').value;
+            const dateRaw = document.getElementById('appDate').value.trim();
+            const payment = document.getElementById('appPayment').value;
+            const dateError = document.getElementById('appDateError');
+
+            dateError.textContent = '';
+
+            // Валидация даты в формате ДД.ММ.ГГГГ
+            const dateRegex = /^(\d{2})\.(\d{2})\.(\d{4})$/;
+            const match = dateRaw.match(dateRegex);
+
+            if (!match) {
+                dateError.textContent = 'Введите дату в формате ДД.ММ.ГГГГ';
+                document.getElementById('appDate').classList.add('error');
+                return;
+            }
+
+            const day = parseInt(match[1]);
+            const month = parseInt(match[2]) - 1;
+            const year = parseInt(match[3]);
+
+            if (day < 1 || day > 31 || month < 0 || month > 11 || year < 2000 || year > 2100) {
+                dateError.textContent = 'Некорректная дата';
+                document.getElementById('appDate').classList.add('error');
+                return;
+            }
+
+            const dateObj = new Date(year, month, day);
+            if (dateObj.getDate() !== day || dateObj.getMonth() !== month || dateObj.getFullYear() !== year) {
+                dateError.textContent = 'Некорректная дата';
+                document.getElementById('appDate').classList.add('error');
+                return;
+            }
+
+            const isoDate = dateObj.toISOString().split('T')[0];
+            document.getElementById('appDate').classList.remove('error');
+
+            // Создаем заявку
+            const app = DB.addApplication({
+                userId: user.id,
+                course: course,
+                startDate: isoDate,
+                payment: payment,
+                status: 'Новая',
+                createdAt: new Date().toISOString()
+            });
+
+            showToast('Заявка отправлена на согласование!', 'success');
+            setTimeout(() => {
+                window.location.href = 'profile.html';
+            }, 1200);
+        });
+
+        // Убираем ошибку при вводе
+        document.getElementById('appDate').addEventListener('input', function() {
+            this.classList.remove('error');
+            document.getElementById('appDateError').textContent = '';
+        });
+    </script>
+</body>
+</html>
