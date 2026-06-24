@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Регистрация — Учусь.РФ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo"><i class="fas fa-graduation-cap"></i> Учусь.РФ</div>
+        <button class="burger" id="burgerBtn"><i class="fas fa-bars"></i></button>
+        <div class="nav-links" id="navLinks">
+            <a href="index.html"><i class="fas fa-home"></i> Главная</a>
+            <a href="register.html" class="active"><i class="fas fa-user-plus"></i> Регистрация</a>
+            <a href="login.html"><i class="fas fa-sign-in-alt"></i> Вход</a>
+            <a href="profile.html"><i class="fas fa-user"></i> Личный кабинет</a>
+            <a href="application.html"><i class="fas fa-file-signature"></i> Заявка</a>
+            <a href="admin.html"><i class="fas fa-shield-alt"></i> Админ</a>
+        </div>
+    </nav>
+
+    <div class="container" style="max-width: 520px;">
+        <div class="card fade-in" style="margin-top: 20px;">
+            <h1 class="card-title" style="text-align: center;">Регистрация</h1>
+            <form id="registerForm">
+                <div class="form-group">
+                    <label>Логин <span class="text-muted">(минимум 6 символов, латиница и цифры)</span></label>
+                    <input type="text" class="form-control" id="regLogin" placeholder="Введите логин" required>
+                    <span class="error-text" id="regLoginError"></span>
+                </div>
+
+                <div class="form-group">
+                    <label>Пароль <span class="text-muted">(минимум 8 символов)</span></label>
+                    <input type="password" class="form-control" id="regPassword" placeholder="Введите пароль" required>
+                    <span class="error-text" id="regPasswordError"></span>
+                </div>
+
+                <div class="form-group">
+                    <label>ФИО</label>
+                    <input type="text" class="form-control" id="regFullName" placeholder="Иванов Иван Иванович" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Контактный телефон</label>
+                    <input type="tel" class="form-control" id="regPhone" placeholder="+7 (999) 999-99-99" required>
+                </div>
+
+                <div class="form-group">
+                    <label>E-mail</label>
+                    <input type="email" class="form-control" id="regEmail" placeholder="example@mail.ru" required>
+                </div>
+
+                <button type="submit" class="btn btn-block">Зарегистрироваться</button>
+            </form>
+
+            <div style="text-align: center; margin-top: 18px;">
+                <span>Уже есть аккаунт? </span>
+                <a href="login.html" style="color: var(--primary); font-weight: 600;">Войти</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/main.js"></script>
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const login = document.getElementById('regLogin').value.trim();
+            const password = document.getElementById('regPassword').value.trim();
+            const fullName = document.getElementById('regFullName').value.trim();
+            const phone = document.getElementById('regPhone').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+
+            let valid = true;
+
+            // Валидация логина
+            const loginError = document.getElementById('regLoginError');
+            const loginRegex = /^[a-zA-Z0-9]{6,}$/;
+            if (!loginRegex.test(login)) {
+                loginError.textContent = 'Логин должен содержать минимум 6 символов (латиница и цифры)';
+                document.getElementById('regLogin').classList.add('error');
+                valid = false;
+            } else if (DB.findUserByLogin(login)) {
+                loginError.textContent = 'Этот логин уже занят';
+                document.getElementById('regLogin').classList.add('error');
+                valid = false;
+            } else {
+                loginError.textContent = '';
+                document.getElementById('regLogin').classList.remove('error');
+            }
+
+            // Валидация пароля
+            const passError = document.getElementById('regPasswordError');
+            if (password.length < 8) {
+                passError.textContent = 'Пароль должен содержать минимум 8 символов';
+                document.getElementById('regPassword').classList.add('error');
+                valid = false;
+            } else {
+                passError.textContent = '';
+                document.getElementById('regPassword').classList.remove('error');
+            }
+
+            if (!valid) return;
+
+            // Создание пользователя
+            const user = DB.addUser({
+                login,
+                password,
+                fullName,
+                phone,
+                email,
+                role: 'user'
+            });
+
+            showToast('Регистрация успешна! Теперь войдите в систему.', 'success');
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 1500);
+        });
+
+        // Убираем ошибки при вводе
+        document.querySelectorAll('#registerForm .form-control').forEach(input => {
+            input.addEventListener('input', function() {
+                this.classList.remove('error');
+                const errorEl = this.closest('.form-group').querySelector('.error-text');
+                if (errorEl) errorEl.textContent = '';
+            });
+        });
+    </script>
+</body>
+</html>
